@@ -220,9 +220,9 @@ void write_superblock(int fd)
 	superblock.s_r_blocks_count = 0;
 	superblock.s_free_blocks_count = NUM_FREE_BLOCKS;
 	superblock.s_free_inodes_count = NUM_FREE_INODES;
-	superblock.s_first_data_block = 1;		  /* First Data Block */
-	superblock.s_log_block_size = 0; /* 1024 */
-	superblock.s_log_frag_size = 0;  /* 1024 */
+	superblock.s_first_data_block = 1; /* First Data Block */
+	superblock.s_log_block_size = 0;   /* 1024 */
+	superblock.s_log_frag_size = 0;	   /* 1024 */
 	superblock.s_blocks_per_group = BLOCK_SIZE * 8;
 	superblock.s_frags_per_group = BLOCK_SIZE * 8;
 	superblock.s_inodes_per_group = NUM_INODES;
@@ -299,12 +299,12 @@ void bitmap_helper(u8 *map_value, int last_block, int size)
 {
 
 	// initialize array to all 1s to indicate used blocks
-        memset(map_value, 0xFF, BLOCK_SIZE);
+	memset(map_value, 0xFF, BLOCK_SIZE);
 
 	// using bit-wise operations, assign free blocks to 0 from the last block to BLOCK_SIZE
 	for (int i = last_block; i < size; i++)
 	{
-	  map_value[i / 8] = map_value[i / 8] ^ (1 << i % 8);
+		map_value[i / 8] = map_value[i / 8] ^ (1 << i % 8);
 	}
 
 	// using bit-wise operations, assign used blocks to 1 up to the last block
@@ -344,7 +344,7 @@ void write_inode_bitmap(int fd)
 	// TODO It's all yours
 	u8 map_value[BLOCK_SIZE];
 
-	//bitmap_helper(map_value, LAST_INO, BLOCK_SIZE);
+	// bitmap_helper(map_value, LAST_INO, BLOCK_SIZE);
 
 	/*       	int bits_used = NUM_INODES % 8;
 	if (bits_used != 0)
@@ -352,7 +352,7 @@ void write_inode_bitmap(int fd)
 		map_value[NUM_INODES / 8] &= (1 << bits_used) - 1;
 		}*/
 
-memset(map_value, 0x0, BLOCK_SIZE);
+	memset(map_value, 0x0, BLOCK_SIZE);
 	map_value[0] = 0xFF;
 	map_value[1] = 0x1F;
 
@@ -360,7 +360,7 @@ memset(map_value, 0x0, BLOCK_SIZE);
 	{
 		map_value[i] = 0xFF;
 	}
-	
+
 	if (write(fd, map_value, BLOCK_SIZE) != BLOCK_SIZE)
 	{
 		errno_exit("write");
@@ -481,26 +481,25 @@ void write_root_dir_block(int fd)
 
 	// write lost+found sub-entry
 	struct ext2_dir_entry lost_found_entry = {0};
-        dir_entry_set(lost_found_entry, LOST_AND_FOUND_INO, "lost+found");
-        dir_entry_write(lost_found_entry, fd);
+	dir_entry_set(lost_found_entry, LOST_AND_FOUND_INO, "lost+found");
+	dir_entry_write(lost_found_entry, fd);
 
 	bytes_remaining -= lost_found_entry.rec_len;
 
 	// write hello sub-entry (symlink)
-        struct ext2_dir_entry hello_entry = {0};
-        dir_entry_set(hello_entry, HELLO_INO, "hello");
-        dir_entry_write(hello_entry, fd);
+	struct ext2_dir_entry hello_entry = {0};
+	dir_entry_set(hello_entry, HELLO_INO, "hello");
+	dir_entry_write(hello_entry, fd);
 
 	bytes_remaining -= hello_entry.rec_len;
 
 	// write hello_world entry
-        struct ext2_dir_entry hello_world_entry = {0};
-        dir_entry_set(hello_world_entry, HELLO_WORLD_INO, "hello-world");
-        dir_entry_write(hello_world_entry, fd);
+	struct ext2_dir_entry hello_world_entry = {0};
+	dir_entry_set(hello_world_entry, HELLO_WORLD_INO, "hello-world");
+	dir_entry_write(hello_world_entry, fd);
 
+	bytes_remaining -= hello_world_entry.rec_len;
 
-        bytes_remaining -= hello_world_entry.rec_len;
-	
 	// write fill entry
 	struct ext2_dir_entry fill_entry = {0};
 	fill_entry.rec_len = bytes_remaining;
@@ -543,6 +542,13 @@ void write_hello_world_file_block(int fd)
 	if (off == -1)
 	{
 		errno_exit("lseek");
+	}
+
+	// write contents of hello world
+	const char *file_content = "Hello world\n";
+	if (write(fd, file_content, strlen(file_content)) != (ssize_t)strlen(file_content))
+	{
+		errno_exit("write");
 	}
 
 	ssize_t bytes_remaining = BLOCK_SIZE;
